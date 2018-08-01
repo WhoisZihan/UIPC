@@ -8,6 +8,8 @@
 #include <linux/fs.h> // file_operations
 #include <linux/device.h> // class_create and others
 
+#include "uipc.h"
+
 MODULE_LICENSE("GPL");              ///< The license type -- this affects runtime behavior
 MODULE_AUTHOR("Zihan Yang");      ///< The author -- visible when you use modinfo
 MODULE_DESCRIPTION("A simple Linux driver to test monitor/mwait in kernel space.");  ///< The description -- see modinfo
@@ -80,6 +82,12 @@ static long uipc_ioctl(struct file *filp,
     long r = -EINVAL;
 
     switch (ioctl) {
+    case UIPC_ENTER_MONITOR_MWAIT:
+        enter_monitor_mwait();
+        break;
+    case UIPC_TRIGGER_MONITOR:
+        trigger = 'C';
+        break;
     default:
         printk(KERN_ERR "[UIPC]: Unkown ioctl number %u ...\n", ioctl);
         enter_monitor_mwait();
