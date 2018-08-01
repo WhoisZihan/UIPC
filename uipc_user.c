@@ -17,22 +17,22 @@ int main(int argc, char *argv[])
     }
 
     char ch;
-    int choice = -1;
+    int cmd = -1;
 
     while ((ch = getopt(argc, argv, "eth")) != -1) {
         switch (ch) {
         case 'e':
-            choice = UIPC_ENTER_MONITOR_MWAIT;
+            cmd = UIPC_ENTER_MONITOR_MWAIT;
             break;
         case 't':
-            choice = UIPC_TRIGGER_MONITOR;
+            cmd = UIPC_TRIGGER_MONITOR;
             break;
         default:
-            choice = -1;
+            cmd = -1;
             break;
         }
     }
-    if (choice < 0) {
+    if (cmd < 0) {
         printf("Usage: ./uipc -e|-t\n\t-e enter mwait state\n\t-t trigger monitored memory");
         return 0;
     }
@@ -42,6 +42,13 @@ int main(int argc, char *argv[])
         perror("open /dev/uipc-mwait failed.\n");
         return 1;
     }
+
+    int res = ioctl(fd, cmd, NULL);
+    if (res < 0) {
+        perror("ioctl failed.\n");
+        return 1;
+    }
+
     close(fd);
     return 0;
 }
