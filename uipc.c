@@ -98,12 +98,6 @@ static struct file_operations fops = {
    .unlocked_ioctl = uipc_ioctl,
 };
 
-/** @brief The LKM initialization function
- *  The static keyword restricts the visibility of the function to within this C file. The __init
- *  macro means that for a built-in driver (not a LKM) the function is only used at initialization
- *  time and that it can be discarded and its memory freed up after that point.
- *  @return returns 0 if successful
- */
 static int __init uipc_init(void){
    printk(KERN_INFO "UIPC: Hello %s from the UIPC LKM!\n", name);
    // Try to dynamically allocate a major number for the device -- more difficult but worth it
@@ -134,18 +128,10 @@ static int __init uipc_init(void){
    return 0;
 }
  
-/** @brief The LKM cleanup function
- *  Similar to the initialization function, it is static. The __exit macro notifies that if this
- *  code is used for a built-in driver (not a LKM) that this function is not required.
- */
 static void __exit uipc_exit(void){
    printk(KERN_INFO "UIPC: Goodbye %s from the UIPC LKM!\n", name);
 }
  
-/** @brief A module must use the module_init() module_exit() macros from linux/init.h, which
- *  identify the initialization function at insertion time and the cleanup function (as
- *  listed above)
- */
 module_init(uipc_init);
 module_exit(uipc_exit);
 
