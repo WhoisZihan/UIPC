@@ -29,7 +29,9 @@ static inline void mwait(uint64_t rax, uint64_t rcx)
             :"a" (rax), "c" (rcx));
 }
 
-char c;
+/* export such symbol, so that we can modify it in another core */
+char trigger = '\0';
+EXPORT_SYMBOL(trigger);
 
 /** @brief The LKM initialization function
  *  The static keyword restricts the visibility of the function to within this C file. The __init
@@ -39,8 +41,18 @@ char c;
  */
 static int __init uipc_init(void){
    printk(KERN_INFO "UIPC: Hello %s from the UIPC LKM!\n", name);
-   monitor((uint64_t)&c, 0, 0);
-   mwait(0, 0);
+   while (1) {
+       if (trigger != 'C') {
+           monitor((uint64_t)&trigger, 0, 0);
+       }
+       if (trigger != 'C') {
+           mwait(0, 0);
+       } else {
+           // we are triggered by the real value modification
+           break;
+       }
+   }
+   printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d\n", trigger);
    return 0;
 }
  
