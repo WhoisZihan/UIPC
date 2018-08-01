@@ -19,7 +19,7 @@ static char *name = "user_level_ipc";        ///< An example LKM argument -- def
 module_param(name, charp, S_IRUGO); ///< Param desc. charp = char ptr, S_IRUGO can be read/not changed
 MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log");  ///< parameter description
 
-#define  DEVICE_NAME "uipc-mwait"    ///< The device will appear at /dev/uipcchar using this value
+#define  DEVICE_NAME "uipc-mwait"    ///< The device will appear at /dev/uipc-mwait using this value
 #define  CLASS_NAME  "uipc"        ///< The device class -- this is a character device driver
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
@@ -137,6 +137,10 @@ static int __init uipc_init(void){
 }
  
 static void __exit uipc_exit(void){
+   device_destroy(uipccharClass, MKDEV(majorNumber, 0));     // remove the device
+   class_unregister(uipccharClass);                          // unregister the device class
+   class_destroy(uipccharClass);                             // remove the device class
+   unregister_chrdev(majorNumber, DEVICE_NAME);             // unregister the major number
    printk(KERN_INFO "UIPC: Goodbye %s from the UIPC LKM!\n", name);
 }
  
