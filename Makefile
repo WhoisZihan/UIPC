@@ -11,8 +11,11 @@ endif
 
 KERNELDIR :=  /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
+USER_SOURCE := uipc_user.c
 
 all:
+	$(CC) -o uipc $(USER_SOURCE)
 	make -C $(KERNELDIR) M=$(PWD) modules
 clean:
+	rm uipc
 	make -C $(KERNELDIR) M=$(PWD) clean
