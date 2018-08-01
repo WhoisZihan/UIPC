@@ -15,7 +15,7 @@ USER_SOURCE := uipc_user.c
 
 all:
 	$(CC) -o uipc $(USER_SOURCE)
-	make -C $(KERNELDIR) M=$(PWD) modules
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 clean:
 	rm uipc
-	make -C $(KERNELDIR) M=$(PWD) clean
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
