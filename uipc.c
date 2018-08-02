@@ -46,7 +46,7 @@ static inline void mwait(uint64_t rax, uint64_t rcx)
             :"a" (rax), "c" (rcx));
 }
 
-/* export such symbol, so that we can modify it in another core */
+/* Allocate 64B, so that fit into cacheline, which is also the monitor size */
 char trigger[64];
 EXPORT_SYMBOL(trigger);
 
