@@ -48,21 +48,27 @@ static inline void mwait(uint64_t rax, uint64_t rcx)
 char trigger[64];
 EXPORT_SYMBOL(trigger);
 
-static void enter_monitor_mwait(void)
+static int monitor_cnt;
+
+static int enter_monitor_mwait(void)
 {
    while (1) {
-       if (trigger[0] != 'C') {
+       if (trigger[0] != 'D') {
            monitor((uint64_t)&trigger[0], 0, 0);
        }
        printk(KERN_INFO "[MONITOR]: Im monitoring %p\n", trigger);
-       if (trigger[0] != 'C') {
+       if ((++monitor_cnt) > 1300)
+           break;
+       if (trigger[0] != 'D') {
            mwait(0, 0);
        } else {
            // we are triggered by the real value modification
            break;
        }
    }
+   monitor_cnt = 0;
    printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d\n", trigger[0]);
+   return 0;
 }
 
 static int uipc_open(struct inode *inodep, struct file *filep)
@@ -84,14 +90,14 @@ static long uipc_ioctl(struct file *filp,
 
     switch (ioctl) {
     case UIPC_ENTER_MONITOR_MWAIT:
-        enter_monitor_mwait();
+        r = enter_monitor_mwait();
         break;
     case UIPC_TRIGGER_MONITOR:
-        trigger[0] = 'C';
+        trigger[0] = 'D';
+        r = 0;
         break;
     default:
         printk(KERN_ERR "[UIPC]: Unkown ioctl number %u ...\n", ioctl);
-        enter_monitor_mwait();
         break;
     }
 
