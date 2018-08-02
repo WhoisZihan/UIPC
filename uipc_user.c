@@ -25,7 +25,7 @@ static void get_monitor_range_size(void)
 {
     unsigned int eax, ebx, ecx, edx;
     uipc_cpuid(0x5, &eax, &ebx, &ecx, &edx);
-    printf("[UIPC] smallest monitor size = 0x%d, largest monitor size = 0x%d\n", eax & 0xFFFF, ebx & 0xffff);
+    printf("[UIPC] smallest monitor size = %d, largest monitor size = %d\n", eax & 0xFFFF, ebx & 0xffff);
 }
 
 int main(int argc, char *argv[])
