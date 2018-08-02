@@ -52,23 +52,23 @@ static int monitor_cnt;
 
 static int enter_monitor_mwait(void)
 {
-   while (1) {
-       if (trigger[0] != 'D') {
-           monitor((uint64_t)&trigger[0], 0, 0);
-       }
-       printk(KERN_INFO "[MONITOR]: Im monitoring %p\n", trigger);
-       if ((++monitor_cnt) > 1300)
-           break;
-       if (trigger[0] != 'D') {
-           mwait(0, 0);
-       } else {
-           // we are triggered by the real value modification
-           break;
-       }
-   }
-   monitor_cnt = 0;
-   printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d\n", trigger[0]);
-   return 0;
+    while (1) {
+        if (trigger[0] != 'D') {
+            monitor((uint64_t)&trigger[0], 0, 0);
+        }
+        printk(KERN_INFO "[MONITOR]: Im monitoring %p\n", trigger);
+        if ((++monitor_cnt) > 1300)
+            break;
+        if (trigger[0] != 'D') {
+            mwait(0, 0);
+        } else {
+            // we are triggered by the real value modification
+            break;
+        }
+    }
+    monitor_cnt = 0;
+    printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d\n", trigger[0]);
+    return 0;
 }
 
 static int uipc_open(struct inode *inodep, struct file *filep)
