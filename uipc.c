@@ -26,6 +26,8 @@ static int    majorNumber;                  ///< Stores the device number -- det
 static struct class*  uipccharClass  = NULL; ///< The device-driver class struct pointer
 static struct device* uipccharDevice = NULL; ///< The device-driver device struct pointer
 
+#define MONITOR_COUNTER 13000
+
 static inline void monitor(uint64_t rax, uint64_t rcx, uint64_t rdx)
 {
     /* "monitor %rax,%rcx,%rdx;" */
@@ -63,7 +65,7 @@ static int enter_monitor_mwait(void)
             // we are triggered by the real value modification
             break;
         }
-        if ((++monitor_cnt) > 13000)
+        if ((++monitor_cnt) > MONITOR_COUNTER)
             break;
     }
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\n", trigger[0], monitor_cnt);
