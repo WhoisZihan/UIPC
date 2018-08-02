@@ -20,6 +20,14 @@ static bool detect_monitor_mwait(void)
     return ecx & MONITOR_MWAIT_FLAG;
 }
 
+/* get the smallest and largest monitor range size*/
+static void get_monitor_range_size(void)
+{
+    unsigned int eax, ebx, ecx, edx;
+    uipc_cpuid(0x5, &eax, &ebx, &ecx, &edx);
+    printf("[UIPC] smallest monitor size = 0x%d, largest monitor size = 0x%d\n", eax & 0xFFFF, ebx & 0xffff);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2 || argc > 3) {
@@ -37,6 +45,8 @@ int main(int argc, char *argv[])
         printf("monitor/mwait is not enabled on your machine\n");
         return 0;
     }
+
+    get_monitor_range_size();
 
     CPU_ZERO(&my_set);
     //ret = sched_getaffinity(0, sizeof(my_set), &my_set);

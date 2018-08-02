@@ -54,6 +54,7 @@ static void enter_monitor_mwait(void)
        if (trigger != 'C') {
            monitor((uint64_t)&trigger, 0, 0);
        }
+       printk(KERN_INFO "[MONITOR]: Im monitoring %p\n", &trigger);
        if (trigger != 'C') {
            mwait(0, 0);
        } else {
