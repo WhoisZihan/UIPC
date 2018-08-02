@@ -56,6 +56,7 @@ static int enter_monitor_mwait(void)
         if (trigger[0] != 'D') {
             monitor((uint64_t)&trigger[0], 0, 0);
         }
+        rmb();
         if (trigger[0] != 'D') {
             mwait(0, 0);
         } else {
@@ -65,8 +66,8 @@ static int enter_monitor_mwait(void)
         if ((++monitor_cnt) > 13000)
             break;
     }
-    monitor_cnt = 0;
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\n", trigger[0], monitor_cnt);
+    monitor_cnt = 0;
     return 0;
 }
 
