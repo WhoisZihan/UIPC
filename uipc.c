@@ -56,7 +56,6 @@ static int enter_monitor_mwait(void)
         if (trigger[0] != 'D') {
             monitor((uint64_t)&trigger[0], 0, 0);
         }
-        printk(KERN_INFO "[MONITOR]: Im monitoring %p\n", trigger);
         if ((++monitor_cnt) > 1300)
             break;
         if (trigger[0] != 'D') {
