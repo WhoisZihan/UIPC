@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
     int res = ioctl(fd, cmd, NULL);
     if (res < 0) {
         perror("ioctl failed.\n");
+        close(fd);
         return 1;
     }
 
