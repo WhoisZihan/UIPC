@@ -1,6 +1,7 @@
 #define _GNU_SOURCE             /* See feature_test_macros(7) */
 #include <stdio.h> // printf
 #include <stdlib.h> // atoi
+#include <stdbool.h> // bool
 //#include <argp.h>
 #include <sys/ioctl.h> // ioctl
 #include <fcntl.h> // open
@@ -11,6 +12,13 @@
 
 #define CMD 200
 #define DATA 300
+
+static bool detect_monitor_mwait(void)
+{
+    unsigned int eax, ebx, ecx, edx;
+    uipc_cpuid(1, &eax, &ebx, &ecx, &edx);
+    return ecx & MONITOR_MWAIT_FLAG;
+}
 
 int main(int argc, char *argv[])
 {
@@ -24,6 +32,11 @@ int main(int argc, char *argv[])
     pid_t pid = getpid();
     cpu_set_t my_set;
     int ret, affinity;
+
+    if (!detect_monitor_mwait()) {
+        printf("monitor/mwait is not enabled on your machine\n");
+        return 0;
+    }
 
     CPU_ZERO(&my_set);
     //ret = sched_getaffinity(0, sizeof(my_set), &my_set);
