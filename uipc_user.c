@@ -28,6 +28,26 @@ static void get_monitor_range_size(void)
     printf("[UIPC] smallest monitor size = %d, largest monitor size = %d\n", eax & 0xFFFF, ebx & 0xffff);
 }
 
+static inline int set_sched_affinity(const char *optarg)
+{
+    pid_t pid = getpid();
+    cpu_set_t my_set;
+    int ret, affinity;
+
+    affinity = atoi(optarg);
+
+    CPU_ZERO(&my_set);
+    CPU_SET(affinity, &my_set);
+
+    ret = sched_setaffinity(pid, sizeof(my_set), &my_set);
+    if (ret < 0) {
+        perror("[UIPC] set affinity failed...\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2 || argc > 3) {
@@ -37,9 +57,6 @@ int main(int argc, char *argv[])
 
     char ch;
     int cmd = -1;
-    pid_t pid = getpid();
-    cpu_set_t my_set;
-    int ret, affinity;
 
     if (!detect_monitor_mwait()) {
         printf("monitor/mwait is not enabled on your machine\n");
@@ -48,23 +65,19 @@ int main(int argc, char *argv[])
 
     get_monitor_range_size();
 
-    CPU_ZERO(&my_set);
     //ret = sched_getaffinity(0, sizeof(my_set), &my_set);
 
-    while ((ch = getopt(argc, argv, "e:th")) != -1) {
+    while ((ch = getopt(argc, argv, "e:t:h")) != -1) {
         switch (ch) {
         case 'e':
             cmd = UIPC_ENTER_MONITOR_MWAIT;
-            affinity = atoi(optarg);
-            CPU_SET(affinity, &my_set);
-            ret = sched_getaffinity(pid, sizeof(my_set), &my_set);
-            if (ret < 0) {
-                perror("[UIPC] set affinity failed...\n");
-                return 1;
-            }
+            if (set_sched_affinity(optarg) < 0)
+                cmd = -1;
             break;
         case 't':
             cmd = UIPC_TRIGGER_MONITOR;
+            if (set_sched_affinity(optarg) < 0)
+                cmd = -1;
             break;
         default:
             cmd = -1;

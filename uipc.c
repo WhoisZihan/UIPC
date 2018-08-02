@@ -56,17 +56,17 @@ static int enter_monitor_mwait(void)
         if (trigger[0] != 'D') {
             monitor((uint64_t)&trigger[0], 0, 0);
         }
-        if ((++monitor_cnt) > 1300)
-            break;
         if (trigger[0] != 'D') {
             mwait(0, 0);
         } else {
             // we are triggered by the real value modification
             break;
         }
+        if ((++monitor_cnt) > 13000)
+            break;
     }
     monitor_cnt = 0;
-    printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d\n", trigger[0]);
+    printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\n", trigger[0], monitor_cnt);
     return 0;
 }
 
@@ -92,6 +92,7 @@ static long uipc_ioctl(struct file *filp,
         r = enter_monitor_mwait();
         break;
     case UIPC_TRIGGER_MONITOR:
+        printk(KERN_INFO "[KERNEL] Im wriing to %p\n", trigger);
         trigger[0] = 'D';
         r = 0;
         break;
