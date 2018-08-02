@@ -52,6 +52,8 @@ EXPORT_SYMBOL(trigger);
 
 static int monitor_cnt;
 
+static uint64_t wakeup_start, wakeup_end;
+
 static int enter_monitor_mwait(void)
 {
     while (1) {
@@ -61,6 +63,7 @@ static int enter_monitor_mwait(void)
         rmb();
         if (trigger[0] != 'D') {
             mwait(0, 0);
+            wakeup_end = rdtsc();
         } else {
             // we are triggered by the real value modification
             break;
@@ -68,7 +71,8 @@ static int enter_monitor_mwait(void)
         if ((++monitor_cnt) > MONITOR_COUNTER)
             break;
     }
-    printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\n", trigger[0], monitor_cnt);
+    printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
+                     trigger[0], monitor_cnt, wakeup_end - wakeup_start);
     monitor_cnt = 0;
     return 0;
 }
@@ -96,6 +100,7 @@ static long uipc_ioctl(struct file *filp,
         break;
     case UIPC_TRIGGER_MONITOR:
         printk(KERN_INFO "[KERNEL] Im wriing to %p\n", trigger);
+        wakeup_start = rdtsc();
         trigger[0] = 'D';
         r = 0;
         break;
