@@ -76,13 +76,14 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    unsigned long arg;
     int fd = open("/dev/uipc-mwait", O_RDWR);
     if (fd < 0) {
         perror("open /dev/uipc-mwait failed.\n");
         return 1;
     }
 
-    int res = ioctl(fd, cmd, NULL);
+    int res = ioctl(fd, cmd, &arg);
     if (res < 0) {
         perror("ioctl failed.\n");
         close(fd);

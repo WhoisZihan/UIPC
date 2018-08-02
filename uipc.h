@@ -1,8 +1,8 @@
 #ifndef UIPC_H_
 #define UIPC_H_
 
-#define UIPC_ENTER_MONITOR_MWAIT 0x01
-#define UIPC_TRIGGER_MONITOR     0x02
+#define UIPC_ENTER_MONITOR_MWAIT 0x1313
+#define UIPC_TRIGGER_MONITOR     0x1323
 
 #define MONITOR_MWAIT_FLAG (1 << 3)
 
