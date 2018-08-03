@@ -7,6 +7,7 @@
 #include <linux/kernel.h>           // Contains types, macros, functions for the kernel
 #include <linux/fs.h> // file_operations
 #include <linux/device.h> // class_create and others
+#include <linux/uaccess.h> // copy_from_user
 
 #include "uipc.h"
 
@@ -26,7 +27,7 @@ static int    majorNumber;                  ///< Stores the device number -- det
 static struct class*  uipccharClass  = NULL; ///< The device-driver class struct pointer
 static struct device* uipccharDevice = NULL; ///< The device-driver device struct pointer
 
-#define MONITOR_COUNTER 13000
+#define MONITOR_COUNTER 1300000
 
 static inline void monitor(uint64_t rax, uint64_t rcx, uint64_t rdx)
 {
@@ -47,22 +48,23 @@ static inline void mwait(uint64_t rax, uint64_t rcx)
 }
 
 /* Allocate 64B, so that fit into cacheline, which is also the monitor size */
-char trigger[64];
+char trigger[8][64];
 EXPORT_SYMBOL(trigger);
 
 static int monitor_cnt;
 
 static uint64_t wakeup_start, wakeup_end;
 
-static int enter_monitor_mwait(void)
+static int enter_monitor_mwait(char buf[64])
 {
+    native_irq_disable();
     while (1) {
-        if (trigger[0] != 'D') {
-            monitor((uint64_t)&trigger[0], 0, 0);
+        if (buf[0] != 'D') {
+            monitor((uint64_t)&buf[0], 0, 0);
         }
         rmb();
-        if (trigger[0] != 'D') {
-            mwait(0, 0);
+        if (buf[0] != 'D') {
+            mwait(0x0, 0);
             wakeup_end = rdtsc();
         } else {
             // we are triggered by the real value modification
@@ -71,8 +73,9 @@ static int enter_monitor_mwait(void)
         if ((++monitor_cnt) > MONITOR_COUNTER)
             break;
     }
+    native_irq_enable();
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
-                     trigger[0], monitor_cnt, wakeup_end - wakeup_start);
+                     buf[0], monitor_cnt, wakeup_end - wakeup_start);
     monitor_cnt = 0;
     return 0;
 }
@@ -93,15 +96,23 @@ static long uipc_ioctl(struct file *filp,
                       unsigned int ioctl, unsigned long arg)
 {
     long r = -EINVAL;
+    unsigned long cpu;
+    r = copy_from_user(&cpu, (void __user *)arg, sizeof(unsigned long));
+    if (r < 0) {
+        printk(KERN_ERR "copy user param failed.\n");
+    }
+    printk(KERN_INFO "cpu = 0x%lx\n", cpu);
+
+    //cpu = *(unsigned long *)arg;
 
     switch (ioctl) {
     case UIPC_ENTER_MONITOR_MWAIT:
-        r = enter_monitor_mwait();
+        r = enter_monitor_mwait(trigger[cpu]);
         break;
     case UIPC_TRIGGER_MONITOR:
-        printk(KERN_INFO "[KERNEL] Im wriing to %p\n", trigger);
+        printk(KERN_INFO "[KERNEL] Im writing to %p\n", trigger[cpu]);
         wakeup_start = rdtsc();
-        trigger[0] = 'D';
+        trigger[cpu][0] = 'D';
         r = 0;
         break;
     default:

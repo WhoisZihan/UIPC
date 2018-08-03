@@ -50,7 +50,7 @@ static inline int set_sched_affinity(const char *optarg)
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2 || argc > 3) {
+    if (argc < 2) {
         printf("Usage:\n./program ENTER|TRIGGER\n");
         return 0;
     }
@@ -67,17 +67,23 @@ int main(int argc, char *argv[])
 
     //ret = sched_getaffinity(0, sizeof(my_set), &my_set);
 
-    while ((ch = getopt(argc, argv, "e:t:h")) != -1) {
+    unsigned long arg;
+
+    while ((ch = getopt(argc, argv, "e:t:d:h")) != -1) {
         switch (ch) {
         case 'e':
             cmd = UIPC_ENTER_MONITOR_MWAIT;
+            arg = atoi(optarg);
             if (set_sched_affinity(optarg) < 0)
                 cmd = -1;
             break;
-        case 't':
-            cmd = UIPC_TRIGGER_MONITOR;
+        case 't': // the cpu the the waker is in
             if (set_sched_affinity(optarg) < 0)
                 cmd = -1;
+            break;
+        case 'd':
+            cmd = UIPC_TRIGGER_MONITOR;
+            arg = atoi(optarg); // the cpu to wakeup
             break;
         default:
             cmd = -1;
@@ -89,7 +95,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    unsigned long arg;
+    printf("waking cpu %ld\n", arg);
     int fd = open("/dev/uipc-mwait", O_RDWR);
     if (fd < 0) {
         perror("open /dev/uipc-mwait failed.\n");
