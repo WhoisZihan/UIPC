@@ -27,7 +27,7 @@ static int    majorNumber;                  ///< Stores the device number -- det
 static struct class*  uipccharClass  = NULL; ///< The device-driver class struct pointer
 static struct device* uipccharDevice = NULL; ///< The device-driver device struct pointer
 
-#define MONITOR_COUNTER 1300000
+#define MONITOR_COUNTER 13000
 
 static inline void monitor(uint64_t rax, uint64_t rcx, uint64_t rdx)
 {
@@ -57,7 +57,6 @@ static uint64_t wakeup_start, wakeup_end;
 
 static int enter_monitor_mwait(char buf[64])
 {
-    native_irq_disable();
     while (1) {
         if (buf[0] != 'D') {
             monitor((uint64_t)&buf[0], 0, 0);
@@ -73,7 +72,6 @@ static int enter_monitor_mwait(char buf[64])
         if ((++monitor_cnt) > MONITOR_COUNTER)
             break;
     }
-    native_irq_enable();
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
                      buf[0], monitor_cnt, wakeup_end - wakeup_start);
     monitor_cnt = 0;

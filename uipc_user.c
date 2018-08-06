@@ -17,6 +17,7 @@ static bool detect_monitor_mwait(void)
 {
     unsigned int eax, ebx, ecx, edx;
     uipc_cpuid(1, &eax, &ebx, &ecx, &edx);
+    printf("[UIPC] processor family = %d, model = %d\n", (eax & 0xF00) >> 8, (ebx & 0xF0) >> 4); // according to CPUID manual page 21
     return ecx & MONITOR_MWAIT_FLAG;
 }
 
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    printf("waking cpu %ld\n", arg);
+    printf("choosing cpu %ld\n", arg);
     int fd = open("/dev/uipc-mwait", O_RDWR);
     if (fd < 0) {
         perror("open /dev/uipc-mwait failed.\n");
