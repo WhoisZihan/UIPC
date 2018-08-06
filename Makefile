@@ -14,8 +14,10 @@ PWD := $(shell pwd)
 USER_SOURCE := uipc_user.c
 
 all:
+	$(CC) -o message_queue/msg_receiver message_queue/msg_receiver.c
+	$(CC) -o message_queue/msg_sender message_queue/msg_sender.c
 	$(CC) -o uipc $(USER_SOURCE)
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 clean:
-	rm uipc
+	rm uipc message_queue/msg_receiver message_queue/msg_sender
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
