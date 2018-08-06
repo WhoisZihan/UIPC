@@ -28,6 +28,7 @@ static struct class*  uipccharClass  = NULL; ///< The device-driver class struct
 static struct device* uipccharDevice = NULL; ///< The device-driver device struct pointer
 
 #define MONITOR_COUNTER 13000
+#define NR_CORES 8
 
 static inline void monitor(uint64_t rax, uint64_t rcx, uint64_t rdx)
 {
@@ -48,10 +49,10 @@ static inline void mwait(uint64_t rax, uint64_t rcx)
 }
 
 /* Allocate 64B, so that fit into cacheline, which is also the monitor size */
-char trigger[8][64];
+DEFINE_PER_CPU(char [64], trigger);
 EXPORT_SYMBOL(trigger);
 
-static int monitor_cnt;
+static DEFINE_PER_CPU(int, monitor_cnt);
 
 static uint64_t wakeup_start, wakeup_end;
 
@@ -69,12 +70,15 @@ static int enter_monitor_mwait(char buf[64])
             // we are triggered by the real value modification
             break;
         }
-        if ((++monitor_cnt) > MONITOR_COUNTER)
+        /* we have already pinned the thread in user space, so we directly
+         * read the variable of this cpu, no need to user per_cpu here */
+        if (__this_cpu_read(monitor_cnt) > MONITOR_COUNTER)
             break;
+        __this_cpu_write(monitor_cnt, __this_cpu_read(monitor_cnt) + 1);
     }
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
-                     buf[0], monitor_cnt, wakeup_end - wakeup_start);
-    monitor_cnt = 0;
+                     buf[0], __this_cpu_read(monitor_cnt), wakeup_end - wakeup_start);
+    __this_cpu_write(monitor_cnt, 0);
     return 0;
 }
 
@@ -99,18 +103,18 @@ static long uipc_ioctl(struct file *filp,
     if (r < 0) {
         printk(KERN_ERR "copy user param failed.\n");
     }
-    printk(KERN_INFO "cpu = 0x%lx\n", cpu);
+    printk(KERN_INFO "dest cpu = 0x%lx, current cpu = 0x%x\n", cpu, smp_processor_id());
 
     //cpu = *(unsigned long *)arg;
 
     switch (ioctl) {
     case UIPC_ENTER_MONITOR_MWAIT:
-        r = enter_monitor_mwait(trigger[cpu]);
+        r = enter_monitor_mwait(per_cpu(trigger, cpu));
         break;
     case UIPC_TRIGGER_MONITOR:
-        printk(KERN_INFO "[KERNEL] Im writing to %p\n", trigger[cpu]);
+        printk(KERN_INFO "[KERNEL] Im writing to %p\n", per_cpu(trigger, cpu));
         wakeup_start = rdtsc();
-        trigger[cpu][0] = 'D';
+        per_cpu(trigger, cpu)[0] = 'D';
         r = 0;
         break;
     default:
