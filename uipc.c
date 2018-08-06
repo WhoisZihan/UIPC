@@ -8,6 +8,7 @@
 #include <linux/fs.h> // file_operations
 #include <linux/device.h> // class_create and others
 #include <linux/uaccess.h> // copy_from_user
+#include <linux/delay.h> // ndelay
 
 #include "uipc.h"
 
@@ -79,6 +80,30 @@ static int enter_monitor_mwait(char buf[64])
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
                      buf[0], __this_cpu_read(monitor_cnt), wakeup_end - wakeup_start);
     __this_cpu_write(monitor_cnt, 0);
+
+#if 0
+    /* busy loop */
+    int i = 1;
+    while (buf[0] != 'D') {
+        buf[i] = (buf[i - 1] + 1) % 255;
+        if ((++i) == 63)
+            i = 1;
+    }
+    wakeup_end = rdtsc();
+    printk(KERN_INFO "[SCHEDULE-OUT] I am triggered, triggered value = %d, wakeup latency = %lld cycles\n",
+                      buf[0], wakeup_end - wakeup_start);
+#endif
+
+#if 0
+    /* sleep */
+    while (buf[0] != 'D') {
+        ndelay(100);
+    }
+    wakeup_end = rdtsc();
+    printk(KERN_INFO "[SCHEDULE-OUT] I am triggered, triggered value = %d, wakeup latency = %lld cycles\n",
+                      buf[0], wakeup_end - wakeup_start);
+#endif
+
     return 0;
 }
 
