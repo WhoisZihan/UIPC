@@ -70,15 +70,13 @@ int main(int argc, char *argv[])
 
     unsigned long arg;
 
-    while ((ch = getopt(argc, argv, "e:t:d:h")) != -1) {
+    while ((ch = getopt(argc, argv, "e:b:d:h")) != -1) {
         switch (ch) {
         case 'e':
             cmd = UIPC_ENTER_MONITOR_MWAIT;
             arg = atoi(optarg);
-            if (set_sched_affinity(optarg) < 0)
-                cmd = -1;
             break;
-        case 't': // the cpu the the waker is in
+        case 'b': // bind thread to specific core
             if (set_sched_affinity(optarg) < 0)
                 cmd = -1;
             break;
