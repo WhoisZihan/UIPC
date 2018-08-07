@@ -55,10 +55,12 @@ EXPORT_SYMBOL(trigger);
 
 static DEFINE_PER_CPU(int, monitor_cnt);
 
-static uint64_t wakeup_start, wakeup_end;
+static DEFINE_PER_CPU(uint64_t, wakeup_start);
+static DEFINE_PER_CPU(uint64_t, wakeup_end);
 
 static int enter_monitor_mwait(char buf[64])
 {
+#if 1
     while (1) {
         if (buf[0] != 'D') {
             monitor((uint64_t)&buf[0], 0, 0);
@@ -66,7 +68,7 @@ static int enter_monitor_mwait(char buf[64])
         rmb();
         if (buf[0] != 'D') {
             mwait(0x0, 0);
-            wakeup_end = rdtsc();
+            __this_cpu_write(wakeup_end, rdtsc());
         } else {
             // we are triggered by the real value modification
             break;
@@ -78,8 +80,9 @@ static int enter_monitor_mwait(char buf[64])
         __this_cpu_write(monitor_cnt, __this_cpu_read(monitor_cnt) + 1);
     }
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
-                     buf[0], __this_cpu_read(monitor_cnt), wakeup_end - wakeup_start);
+                     buf[0], __this_cpu_read(monitor_cnt), __this_cpu_read(wakeup_end) - __this_cpu_read(wakeup_start));
     __this_cpu_write(monitor_cnt, 0);
+#endif
 
 #if 0
     /* busy loop */
@@ -97,11 +100,11 @@ static int enter_monitor_mwait(char buf[64])
 #if 0
     /* sleep */
     while (buf[0] != 'D') {
-        ndelay(100);
+        udelay(1);
     }
-    wakeup_end = rdtsc();
+    __this_cpu_write(wakeup_end, rdtsc());
     printk(KERN_INFO "[SCHEDULE-OUT] I am triggered, triggered value = %d, wakeup latency = %lld cycles\n",
-                      buf[0], wakeup_end - wakeup_start);
+                      buf[0], __this_cpu_read(wakeup_end) - __this_cpu_read(wakeup_start));
 #endif
 
     return 0;
@@ -138,7 +141,7 @@ static long uipc_ioctl(struct file *filp,
         break;
     case UIPC_TRIGGER_MONITOR:
         printk(KERN_INFO "[KERNEL] Im writing to %p\n", per_cpu(trigger, cpu));
-        wakeup_start = rdtsc();
+        per_cpu(wakeup_start, cpu) = rdtsc();
         per_cpu(trigger, cpu)[0] = 'D';
         r = 0;
         break;
