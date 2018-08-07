@@ -63,7 +63,7 @@ int main()
             exit(EXIT_FAILURE);
         }
         printf("[%d] sent in 0x%lx\n", sender_cnt++, send_tsc);        
-        if (strncmp(buffer, "end", 3) == 0 || sender_cnt > 1000) {
+        if (strncmp(buffer, "end", 3) == 0 || sender_cnt > 10000) {
             running = 0;
         }
     }
