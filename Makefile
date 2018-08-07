@@ -17,7 +17,7 @@ all:
 	$(CC) -o message_queue/msg_receiver message_queue/msg_receiver.c
 	$(CC) -o message_queue/msg_sender message_queue/msg_sender.c
 	$(CC) -o futex/futex-basic-process futex/futex-basic-process.c
-	$(CC) -o uipc $(USER_SOURCE)
+	$(CC) -o uipc_user $(USER_SOURCE)
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 clean:
 	rm uipc message_queue/msg_receiver message_queue/msg_sender futex/futex-basic-process
