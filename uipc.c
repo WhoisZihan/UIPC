@@ -58,8 +58,9 @@ static DEFINE_PER_CPU(int, monitor_cnt);
 static DEFINE_PER_CPU(uint64_t, wakeup_start);
 static DEFINE_PER_CPU(uint64_t, wakeup_end);
 
-static int enter_monitor_mwait(char buf[64])
+static int enter_monitor_mwait(int cpu)
 {
+    char *buf = per_cpu(trigger, cpu);
 #if 1
     while (1) {
         if (buf[0] != 'D') {
@@ -80,7 +81,7 @@ static int enter_monitor_mwait(char buf[64])
         __this_cpu_write(monitor_cnt, __this_cpu_read(monitor_cnt) + 1);
     }
     printk(KERN_INFO "[MWAIT]: I am triggered, triggered value = %d, monitor_cnt = %d\nwakeup latency = %lld cycles\n",
-                     buf[0], __this_cpu_read(monitor_cnt), __this_cpu_read(wakeup_end) - __this_cpu_read(wakeup_start));
+                     buf[0], __this_cpu_read(monitor_cnt), __this_cpu_read(wakeup_end) - per_cpu(wakeup_start, cpu));
     __this_cpu_write(monitor_cnt, 0);
 #endif
 
@@ -137,7 +138,7 @@ static long uipc_ioctl(struct file *filp,
 
     switch (ioctl) {
     case UIPC_ENTER_MONITOR_MWAIT:
-        r = enter_monitor_mwait(per_cpu(trigger, cpu));
+        r = enter_monitor_mwait(cpu);
         break;
     case UIPC_TRIGGER_MONITOR:
         printk(KERN_INFO "[KERNEL] Im writing to %p\n", per_cpu(trigger, cpu));
